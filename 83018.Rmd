@@ -1,0 +1,294 @@
+---
+title: "8/30/18 notes"
+author: "Brennan Donnell"
+output: pdf_document
+---
+
+
+# NOTES
+## Intro
+
+Replication is important when writing code. Make sure it's legible and easily understandable, and that your variables make sense. 
+you also want to show what worked **and** what didn't. 
+
+Side note, go back and redo the code in python/r and write a report about it. You could get it published too. Go to a conference with it as opposed to a journal. 
+
+## R Markdown
+What is it? 
+
+it's markdown mixed with R code. Its output is similar to HTML, but way easier to write. 
+Good thing about it is that you can run your R code **AND** your python code. 
+
+# THIS IS HEADING 1
+## this is a second heading. 
+From the pop-up window, if you select **Open in browser** it opens in your browser. 
+
+## lists and asterisks
+
+* Putting *one* asterisk around text gives you *italicized* text. 
+* Putting **two** asterisks around text gives you **bolded** text. 
+    + To give you a list, give a space between the start of the list
+
+[link](www.rstudio.com) is how you make a link. 
+
+***
+# Example: mexample.txt
+## create the stuff in r markdown. 
+Applicants must hold a baccalaureate degree (no specific field of study is required) from an accredited college or university with a **3.0 GPA** or higher. Applicants should have demonstrated quantitative aptitude in undergraduate coursework or similar work experience in analytic field. Prior coursework may include: ***statistics, chemistry, physics, mathematics*** or other quantitative courses.
+Submit an application to the [UNH Graduate School](http://gradschool.unh.edu/apply.php) with the following:
+
+1. Prior college transcripts
+2. Two letters of recommendation
+3. Resume
+
+The document was last update on: `r Sys.time()`
+
+***
+# How about actually using R code in this? 
+## simple. 
+Here's how it is done. This is called an **R Chunk**
+The following function (*paste*) concatenates two strings: "AB" and "CD". 
+```{r}
+fn <- "AB"
+ln <- "CD"
+print(paste(fn, ln))
+
+x <- "Univ of"
+y <- "New Hampshire"
+paste(x, y)
+```
+Now let's say that this code didn't work, but we still want to keep it. How do we hide it? in the R chunk, put {r echo=FALSE}. 
+```{r echo=FALSE}
+fn <- "AB"
+ln <- "CD"
+print(paste(fn, ln))
+
+x <- "Univ of"
+y <- "New Hampshire"
+paste(x, y)
+```
+But now, we're still getting the output. WE don't even want that. Now try {r echo=FALSE, eval=FALSE}. With the new eval=FALSE, the code in the chunk doesn't even get executed. 
+```{r echo=FALSE, eval=FALSE}
+fn <- "AB"
+ln <- "CD"
+print(paste(fn, ln))
+
+x <- "Univ of"
+y <- "New Hampshire"
+paste(x, y)
+```
+To turn off warnings, such as from loading libraries, if you include warning=FALSE in the curly braces for the chunk, the warnings won't appear. 
+
+Lastly, to showcase the code but *not* the results, use {r results='hide'} in the chunk. 
+
+***
+# question
+## in R markdown...
+use data(mtcars) and do some stuff
+SCATTERPLOT of **MPG vs HP**
+```{r warning=FALSE, results='hide', mtcars, fig.height=4}
+library(ggplot2)
+#plot(mtcars$mpg, mtcars$hp)
+ggplot(mtcars, aes(hp, mpg)) + geom_point(aes())
+```
+Bar Pot of **gear**
+```{r}
+ggplot(mtcars, aes(gear)) + geom_bar()
+```
+***
+
+# BENCHMARKING
+
+## WHY DO WE NEED IT? 
+
+Is your code **too slow**? Does your system **Crash** whenever you run R?
+Well, *try keeping your libraries up-to-date*. 
+system.time(command) times it. 
+```{r warning=FALSE}
+library(readr)
+```
+which runs faster, read.csv() or read_csv()?
+```{r warning=FALSE}
+setwd("/Users/brennandonnell/Desktop/grad_school/R")
+system.time(
+  read.csv("NH_data_072418.csv")
+  )
+
+system.time(
+  read_csv("NH_data_072418.csv")
+)
+```
+
+check out the library(microbenchmark). this'll do it a lot better. 
+
+```{r warning=FALSE, eval=FALSE}
+library(microbenchmark)
+microbenchmark(read.csv("NH_data_072418.csv"),
+               read_csv("NH_data_072418.csv"),
+               times = 3)
+```
+
+an important thing to know for parallel processing is *how many cores does your computer have*? 
+Luckily, thereis an easy way to figure it out, thanks to the benchmarkme library
+```{r}
+library(benchmarkme)
+get_ram()
+get_cpu()
+```
+# Code
+
+* Which part of the code is taking the longest time to execute? 
+* Can you change the way you are executing the code? 
+    + Which is taking up the most time? 
+
+this is where the library profvis comes in. 
+
+* It allows you to benchmark *each line* of our code for...
+    + d
+    + d
+
+how do you use it? 
+profvis({
+your code here
+})
+
+```{r warning=FALSE, eval=FALSE}
+library(profvis)
+profvis({
+  library(readr)
+  x <- read_csv("Durham_Weather.csv")
+  x$below_zero_vector <- ifelse(x$TMIN < 0, 1, 0)
+  for (i in 1:length(x$TMIN)){
+    if (x$TMIN[1] < 0){
+      x$below_zero_loop[i] <- 1
+    }else{
+      x$below_zero_loop[i] <- 0
+    }
+    }
+})
+```
+ 
+*** 
+write code to make a scatterplot of tmin vs tmax using ggplot and plot. According to profvis, which is better? 
+
+```{r warning=FALSE, eval=FALSE}
+profvis({
+   x <- read_csv("Durham_Weather.csv")
+   durham_weather <- filter(x, !is.na(TMAX) | !is.na(TMIN))
+   plot(durham_weather$TMIN, durham_weather$TMAX)
+   ggplot(durham_weather, aes(TMIN, TMAX)) + geom_point()
+})
+```
+All odd occurances aside, it
+what does *version* do? `r version`
+it prints out the version & other stuff. 
+
+***
+
+# Question: 
+
+* Does every year have 365 days? (no, leap year)
+* Does every day have 24 hours? (no, dst)
+* Does every minute have 60 seconds? (no, leap second. )
+
+SO... what is the right day or time? what date and time is universal? what is the global standard time? [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) is the golden standard. 
+
+* yyyy-mm-dd
+    + Example: 24 July 2018 in ISO 8601 is 2018-07-24, no need of separators (or - if needed). 
+* HH:MM:SS
+    + Example: 9.15 PM in ISO 8601 standard is 21:15:00
+```{r}
+x <- Sys.Date()
+```
+
+*** 
+
+# fun
+
+Use the appropriate lubridate function to parse each of the following dates: 
+
+* d1 <- "August 29, 2018"
+* d2 <- "2018-Aug-29"
+* d3 <- "29-Aug-2018"
+* d4 <- c("August 29 (2018)","August 30 (2018)")
+* d5 <- "08/29/18"
+
+(if you don't remember lubridate, google the following: DMY, MDY, YMD)
+
+```{r}
+library(lubridate)
+d1 <- mdy("August 29, 2018")
+d2 <- ymd("2018-Aug-29")
+d3 <- dmy("29-Aug-2018")
+d4 <- mdy(c("August 29 (2018)", "August 30 (2018)"))
+d5 <- mdy("08/29/18")
+```
+
+Now try reading in durham weather again and telling the class of the variable
+
+```{r}
+y <- read.csv("Durham_Weather.csv")
+typeof(y$Temp_Date)
+
+x <- read_csv("Durham_Weather.csv")
+typeof(x$Temp_Date)
+typeof(x$Raw_Date)
+```
+SO, read.csv gives us an integer, and read_csv gives us a double. better. 
+now, extract and create new columns for
+
+* day
+* month (label)
+* year
+* weekday (label)
+* yearday 
+
+(hints: In lubridate, day, month, year, wday, yday)
+```{r warning=FALSE}
+x1 <- read_csv("Durham_Weather.csv")
+x1$Day     <- day(x$Temp_Date)
+x1$Month   <- month(x$Temp_Date, label = TRUE)
+x1$Year    <- year(x$Temp_Date)
+x1$Weekday <- wday(x$Temp_Date, label = TRUE)
+x1$Yearday <- yday(x$Temp_Date)
+```
+
+Now try doing that with the rawdate. 
+```{r warning=FALSE}
+x2 <- read_csv("Durham_Weather.csv")
+x2$Day     <- day(x$Raw_Date)
+x2$Month   <- month(x$Raw_Date, label = TRUE)
+x2$Year    <- year(x$Raw_Date)
+x2$Weekday <- wday(x$Raw_Date, label = TRUE)
+x2$Yearday <- yday(x$Raw_Date)
+```
+INterestingly enough, the date in Raw_Date switches midway through, resulting in a lot of missing data. How do we fix this? 
+
+d2$raw_date_fixed <- parse_date_time... just check the notes. 
+
+***
+
+# Work on the following before coming back: 
+
+## checking for holidays? 
+
+* for the Durham_Weather dataset, create a column "isholiday" which equals 1 if NYSE is closed, or 0 if NYSE is open for the years 2014 & 2015
+* SOme of the functions of interest to solve this problem include...
+    + holidayNYSE from library(timeDate)
+    + %in%
+
+holidayNYSE takes in a year and gives back the timedates of the holidays
+```{r warning=FALSE, message=FALSE}
+library(timeDate)
+hw           <- read_csv("Durham_Weather.csv")
+hw$Day       <- day(hw$Temp_Date)
+hw$Month_lab <- month(hw$Temp_Date, label = TRUE)
+hw$Month     <- month(hw$Temp_Date)
+hw$Year      <- year(hw$Temp_Date)
+hw$Weekday   <- wday(hw$Temp_Date, label = TRUE)
+hw$Yearday   <- yday(hw$Temp_Date)
+hw$YMD       <- ymd(paste(hw$Year, hw$Month, hw$Day, sep = "-"))
+hw$isweekend <- ifelse(hw$Weekday %in% c("Sat", "Sun"), 1, 0)
+hw$isholiday <- ifelse(hw$YMD %in% as.Date(holidayNYSE(2014:2015)), 1,
+                       ifelse(hw$isweekend == 1, 1, 0))
+```

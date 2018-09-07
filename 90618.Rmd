@@ -1,0 +1,192 @@
+---
+title: "9/6/2018 notes"
+author: "Brennan Donnell"
+date: "9/6/2018"
+output: html_document
+runtime: shiny
+---
+```{r libraries}
+library(dplyr)
+library(ggplot2)
+```
+# Using python in RMD
+The library reticulate enables to use python with r, you also have to direct to where it is using the *use_python* method. 
+```{r python_enabler}
+library(reticulate)
+use_python("/Users/brennandonnell/anaconda/bin/python")
+```
+Printing the first ten natural numbers numbers using r
+```{r r_code}
+x <- 1:10
+print(x)
+```
+Printing the first ten natural numbers using python
+```{python python_code}
+import numpy as np
+y = np.arange(1,11)
+print(y)
+```
+# Shiny: 
+## What is it? 
+This is what you use if you can't afford tableau and/or you are on a budget. 
+
+* R package for *interactive web apps*
+
+## 3 major road blocks
+1. **User INterface (UI) aka look and feel**
+    + Defines the components of the user interface
+        + Page titles
+        + Input options
+        + Outputs
+    + Defines what the user will see and interact with
+2. **Server, aka brain**
+    + Contains the information to build the app
+    + Defines what happens in R
+3. **Global/shinyapp aka enabler**
+
+```{r shiny_example_1}
+library(shiny)
+# User Interface
+ui_demo <- fluidPage(
+ # "UNH Analytics & Data Science"
+  #
+  tags$em(h2("UNH Analytics & Data Science"))
+  )
+# Server
+server_demo <- function(input, output){
+}
+
+# Enabler, creates the app. 
+shinyApp(ui=ui_demo, server=server_demo)
+```
+You can also use tags for this, see the comments. 
+```{r html_tags}
+names(tags)
+```
+## Making user input
+
+```{r shiny_example_2}
+ui2 <- fluidPage(
+  sidebarLayout(
+    sidebarPanel(textInput(inputId = "n1", label = "input name")), 
+    mainPanel(textOutput(outputId = "displaytext"))
+    )
+  )
+
+server2 <- function(input, output) {
+  output$displaytext <- renderText(
+    print(paste("Hello", input$n1))
+  )
+}
+shinyApp(ui=ui2, server = server2)
+```
+## another example
+make it do it for two strings together
+```{r shiny_example_3}
+ui3 <- fluidPage(
+  sidebarLayout(
+    sidebarPanel(textInput(inputId = "n1", label = "input first"),
+                 textInput(inputId = "n2", label = "input second")), 
+    mainPanel(textOutput(outputId = "displaytext"))
+    )
+  )
+
+server3 <- function(input, output) {
+  output$displaytext <- renderText(
+    print(paste(input$n1, input$n2))
+  )
+}
+shinyApp(ui=ui3, server = server3)
+```
+## make a calculator
+doesn't work yet
+```{r shiny_example_4}
+ui4 <- fluidPage(
+  sidebarLayout(
+    sidebarPanel(
+      numericInput(inputId = "n1", label = "First number", 0),
+      numericInput(inputId = "n2", label = "Second number", 0)), 
+    mainPanel(textOutput(outputId = "calculate"))
+    )
+  )
+
+server4 <- function(input, output) {
+  output$calculate <- renderText(
+    sum(input$n1, input$n2)
+  )
+}
+shinyApp(ui=ui4, server = server4)
+```
+# Moving on to the csv
+
+```{r reading_csv, warning=FALSE, error=FALSE, message=FALSE}
+library(readr)
+fastfood_data <- read_csv("/Users/brennandonnell/Desktop/grad_school/R/fast_food (1).csv")
+```
+Doing stuff in shiny!
+
+```{r radiobuttons}
+ui_food <- fluidPage(
+  # Sidebar layout with input and output definitions ----
+  sidebarLayout(
+    # Sidebar panel for inputs ----
+    sidebarPanel(
+      radioButtons("chain_ui", "Select Chain", choices = unique(fastfood_data$Chain), 
+                         selected = unique(fastfood_data$Chain)[1],inline = FALSE)
+      
+    
+      ),
+    # Main panel for displaying outputs ----
+    mainPanel(
+      # Output: Text ----
+      h2("Scatter Plot"),
+      plotOutput(outputId = "scatter")
+      )
+  )
+)
+server_food <- function(input,output){
+  filtered_data <- reactive(filter(fastfood_data, Chain == input$chain_ui))
+  output$scatter <- renderPlot(
+    {
+      ggplot(filtered_data(), aes(x=Calories,y=Saturated_Fat))+ geom_point()+
+                    theme_classic()+scale_x_continuous(limits = c(0, 1500)) +
+                    scale_y_continuous(limits = c(0,35))
+    }
+  )
+}
+
+shinyApp(ui = ui_food, server = server_food)
+```
+
+#What if we want to make a server of it? 
+Copyt he following into a new folder.
+```{r za_warudo}
+library(shiny)
+library(dplyr)
+library(ggplot2)
+library(readr)
+fastfood_data <- read_csv("fast_food.csv")
+```
+in the previous cell, make separate .r scripts for the server, ui, and the above will be the global
+
+---
+#shinyapps.io stuff
+Go to [shinyapps.io](https://www.shinyapps.io) and make an account. It's pretty nifty and will let you share your apps. You can also link it up to your GitHub account, so you should also do that. 
+
+Go to Account, and then token. Don't share your token. 
+Now, in RStudio, under *Tools*, select *Global Options*, and then pick *Publishing*. You'll be able to *Connect* your shinyapps.io account to this, by putting the super secret code into there. 
+
+## This is where the fun begins. 
+Now, open one of your global files. a little button that says *Run app* will appear From there it will do the thing. **But wait, there's more!** If you click on the *publish* icon, you can publish it to your shinyapps.io account, and then run it on that website, and other people can also run it. 
+
+**Note:** whenever you publish stuff, you don't need the enabler. 
+
+---
+# For next week...
+
+* Create multiple tabs: one with a barplot, another with a scatterplot
+* get your internet to work
+* make a shinyapps.io account
+    + Hint: use tabsetPanel() and tabPanel() as necessary within the mainPanel. 
+    
+ON to tableauprep
